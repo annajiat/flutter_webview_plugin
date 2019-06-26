@@ -3,7 +3,7 @@
 static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 
 // UIWebViewDelegate
-@interface FlutterWebviewPlugin() <WKNavigationDelegate, UIScrollViewDelegate, WKUIDelegate> {
+@interface FlutterWebviewPlugin() <WKNavigationDelegate, UIScrollViewDelegate, WKUIDelegate, WKScriptMessageHandler> {
     BOOL _enableAppScheme;
     BOOL _enableZoom;
     NSString* _invalidUrlRegex;
@@ -107,7 +107,15 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
         rc = self.viewController.view.bounds;
     }
 
-    self.webview = [[WKWebView alloc] initWithFrame:rc];
+    WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc]
+                                             init];
+    WKUserContentController *controller = [[WKUserContentController alloc]
+                                           init];
+    
+    [controller addScriptMessageHandler:self name:@"ios"];
+    configuration.userContentController = controller;
+    
+    self.webview = [[WKWebView alloc] initWithFrame:rc configuration: configuration];
     self.webview.UIDelegate = self;
     self.webview.navigationDelegate = self;
     self.webview.scrollView.delegate = self;
@@ -123,7 +131,11 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
     } else {
         [preferences setJavaScriptEnabled:NO];
     }
+    
+    
+    
 
+    
     _enableZoom = [withZoom boolValue];
 
     UIViewController* presentedViewController = self.viewController.presentedViewController;
@@ -146,6 +158,15 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 
     id yDirection = @{@"yDirection": @(scrollView.contentOffset.y) };
     [channel invokeMethod:@"onScrollYChanged" arguments:yDirection];
+}
+
+- (void)userContentController:(WKUserContentController *)userContentController
+didReceiveScriptMessage:(WKScriptMessage *)message {
+    
+    // Log out the message received
+    NSLog(@"Received event %@", message.body);
+    id messageArgument = @{@"message": message.body };
+    [channel invokeMethod:@"messageFromJS" arguments: messageArgument];
 }
 
 - (void)navigate:(FlutterMethodCall*)call {

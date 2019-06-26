@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -157,6 +158,7 @@ class WebviewManager {
         });
 
         webView.setWebViewClient(webViewClient);
+        webView.addJavascriptInterface(new WebAppInterface(), "Android");
         webView.setWebChromeClient(new WebChromeClient()
         {
             //The undocumented magic method override
@@ -322,6 +324,15 @@ class WebviewManager {
             });
         } else {
             CookieManager.getInstance().removeAllCookie();
+        }
+    }
+
+    public class WebAppInterface {
+        @JavascriptInterface
+        public void getPostMessage(String value){
+            Map<String, Object> orderMap = new HashMap<>();
+            orderMap.put("message", value);
+            FlutterWebviewPlugin.channel.invokeMethod("messageFromJS", orderMap);
         }
     }
 

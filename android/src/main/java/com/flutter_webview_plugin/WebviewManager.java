@@ -314,6 +314,7 @@ class WebviewManager {
         return EMPTY;
     }
 
+    @SuppressWarnings("deprecation")
     private void clearCookies() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().removeAllCookies(new ValueCallback<Boolean>() {
